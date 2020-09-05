@@ -1,0 +1,16 @@
+PREFIX := arm-none-eabi-
+CC := $(PREFIX)gcc
+OBJCOPY := $(PREFIX)objcopy
+OBJDUMP := $(PREFIX)objdump
+AR := $(PREFIX)ar
+GDB := $(PREFIX)gdb
+
+CFLAGS := $(CFLAGS) -std=c11
+CFLAGS += -Wall -Wmissing-prototypes -Wstrict-prototypes -Werror=implicit-function-declaration -Werror=format -Wimplicit-fallthrough -Wshadow
+CFLAGS += -Os -g3
+%if dev["core"] != "m4":
+CFLAGS += -mcpu=cortex-${dev["core"]} -mthumb
+%else:
+CFLAGS += -mcpu=cortex-${dev["core"]} -mfloat-abi=hard -mfpu=fpv4-sp-d16 -mthumb
+%endif
+CFLAGS += -ffunction-sections -fdata-sections

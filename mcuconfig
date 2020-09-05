@@ -37,6 +37,7 @@ parser.add_argument("target_dir", metavar = "dirname", help = "Directory in whic
 args = parser.parse_args(sys.argv[1:])
 
 class DeviceNotSupportedException(Exception): pass
+class TemplateException(Exception): pass
 
 class Helper():
 	@classmethod
@@ -61,13 +62,14 @@ class Configurator():
 			raise DeviceNotSupportedException("Unsupported device: %s (no such directory: %s)" % (self._config["processor"], self._dev_path))
 		with open(self._dev_path + "device.json") as f:
 			self._dev_config = json.load(f)
-		with contextlib.suppress(FileExistsError):
-			os.makedirs(self._args.target_dir)
 		self._utcnow = datetime.datetime.utcnow()
 
 		self._lookup = mako.lookup.TemplateLookup([ self._dev_path, self._base_path + "common/" ], strict_undefined = True, input_encoding = "utf-8")
 
 	def _generate(self, filename, force = False):
+		def raise_error(msg):
+			raise TemplateException(msg)
+
 		output_filename = self._args.target_dir + "/" + filename
 		if (not force) and os.path.exists(output_filename):
 			return
@@ -79,8 +81,11 @@ class Configurator():
 			"now":		self._utcnow,
 			"vectors":	VectorTable(self._dev_path + "/vectors.txt"),
 			"h":		Helper,
+			"error":	lambda msg: raise_error("Template %s threw error: %s" % (filename, msg)),
 		}
 		output = template.render(**template_args)
+		with contextlib.suppress(FileExistsError):
+			os.makedirs(os.path.dirname(output_filename))
 		with open(output_filename, "w") as f:
 			f.write(output)
 
@@ -88,6 +93,6 @@ class Configurator():
 		for filename in self._dev_config["force_files"]:
 			self._generate(filename, force = True)
 		for filename in self._dev_config["optional_files"]:
-			self._generate(filename, force = False)
+			self._generate(filename, force = self._args.force_optional)
 
 Configurator(args).run()
