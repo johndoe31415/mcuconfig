@@ -2,5 +2,8 @@
 	"processor":	"stm32f103c8",
 	"target_clk":	72000000,
 	"clocksrc": 	"hse-pll",
-	"hse-freq":		8000000
+	"hse-freq":		8000000,
+	"pinmap": {
+		"PA13": { "name": "foo", "mode": "out", "invert": true }
+	}
 }
