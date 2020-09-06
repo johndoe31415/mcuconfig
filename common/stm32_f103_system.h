@@ -57,6 +57,7 @@
 #define ${pin["name"]}_set_active()		${pin["name"]}_set_low()
 #define ${pin["name"]}_set_inactive()	${pin["name"]}_set_high()
 %endif
+#define ${pin["name"]}_toggle()			${pin["name"]}_PORT->ODR ^= ${pin["name"]}_MASK
 %endif
 #define ${pin["name"]}_get()			((${pin["name"]}_PORT->IDR >> ${pin["name"]}_PIN) & 1)
 #define ${pin["name"]}_is_high()		(${pin["name"]}_get() != 0)
