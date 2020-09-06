@@ -27,7 +27,7 @@ stdperiph:
 	make -C stdperiph
 
 openocd:
-	openocd -f interface/jlink.cfg -c 'transport select swd' -f target/${conf["processor"][:7]}.cfg
+	openocd -f interface/jlink.cfg -c 'transport select swd' -f target/${conf["processor"][:7]}x.cfg
 
 ocdconsole:
 	telnet 127.0.0.1 4444
