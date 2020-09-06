@@ -154,6 +154,8 @@ static void gpio_init(void) {
 			.GPIO_Mode = GPIO_Mode_${mode.stdperiph()},
 			%if speed is not None:
 			.GPIO_Speed = GPIO_Speed_${speed}MHz,
+			%else:
+			.GPIO_Speed = GPIO_Speed_2MHz,
 			%endif
 	});
 	%endif

@@ -78,13 +78,14 @@ class Configurator():
 
 		template = self._lookup.get_template(filename)
 		template_args = {
-			"conf":		self._config,
-			"dev":		self._dev_config,
-			"now":		self._utcnow,
-			"vectors":	VectorTable(self._dev_path + "/vectors.txt"),
-			"h":		Helper,
-			"pinmap":	self._pinmap,
-			"error":	lambda msg: raise_error("Template %s threw error: %s" % (filename, msg)),
+			"conf":				self._config,
+			"dev":				self._dev_config,
+			"now":				self._utcnow,
+			"vectors":			VectorTable(self._dev_path + "/vectors.txt"),
+			"h":				Helper,
+			"pinmap":			self._pinmap,
+			"error":			lambda msg: raise_error("Template %s threw error: %s" % (filename, msg)),
+			"config_filename":	os.path.basename(self._args.config_file),
 		}
 		output = template.render(**template_args)
 		with contextlib.suppress(FileExistsError):

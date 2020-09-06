@@ -3,5 +3,5 @@
 	"ram_size":			20480,
 	"rom_size":			131072,
 	"force_files":		[ "system.c", "system.h", "linker.ld", "startup.s", "stdperiph/Makefile" ],
-	"optional_files":	[ "main.c", "Makefile", "Makefile.toolchain", "stdperiph/configuration.h" ]
+	"optional_files":	[ "main.c", "init.c", "init.h", "Makefile", "Makefile.toolchain", "stdperiph/configuration.h" ]
 }
