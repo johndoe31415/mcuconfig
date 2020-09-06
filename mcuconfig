@@ -28,6 +28,7 @@ import datetime
 import mako.lookup
 from FriendlyArgumentParser import FriendlyArgumentParser
 from VectorTable import VectorTable
+from PinMap import PinMapSTMCortexM
 
 parser = FriendlyArgumentParser(description = "Configure a microcontroller project.")
 parser.add_argument("-f", "--force-optional", action = "store_true", help = "By default, optional files are not overwritten when a project is regenerated. With this option, all generated files are written from scratch.")
@@ -65,6 +66,7 @@ class Configurator():
 		self._utcnow = datetime.datetime.utcnow()
 
 		self._lookup = mako.lookup.TemplateLookup([ self._dev_path, self._base_path + "common/" ], strict_undefined = True, input_encoding = "utf-8")
+		self._pinmap = PinMapSTMCortexM(self._config["pinmap"])
 
 	def _generate(self, filename, force = False):
 		def raise_error(msg):
@@ -81,6 +83,7 @@ class Configurator():
 			"now":		self._utcnow,
 			"vectors":	VectorTable(self._dev_path + "/vectors.txt"),
 			"h":		Helper,
+			"pinmap":	self._pinmap,
 			"error":	lambda msg: raise_error("Template %s threw error: %s" % (filename, msg)),
 		}
 		output = template.render(**template_args)

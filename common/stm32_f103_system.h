@@ -30,6 +30,47 @@
 #ifndef __STM32_F103_SYSTEM_H__
 #define __STM32_F103_SYSTEM_H__
 
+#include <stm32f10x_gpio.h>
+
+%for pin in pinmap:
+<%
+	pin_desc = [ "P%s%d" % (pin["pin"].port, pin["pin"].pin_no), "mode = %s" % (pin["mode"].name) ]
+	if pin.get("invert"):
+		pin_desc.append("inverted")
+	if pin.get("speed") is not None:
+		pin_desc.append("speed %s MHz" % (pin["speed"]))
+	if pin.get("af") is not None:
+		pin_desc.append("alternate function %s" % (pin["af"]))
+
+%>\
+// ${pin["name"]}: ${", ".join(pin_desc)}
+#define ${pin["name"]}_PORT				PORT${pin["pin"].port}
+#define ${pin["name"]}_PIN				${pin["pin"].pin_no}
+#define ${pin["name"]}_MASK				(1 << ${pin["name"]}_PIN)
+%if pin["mode"].settable:
+#define ${pin["name"]}_set_high()		${pin["name"]}_PORT->BSRR = ${pin["name"]}_MASK
+#define ${pin["name"]}_set_low()		${pin["name"]}_PORT->BRR = ${pin["name"]}_MASK
+%if not pin.get("invert", False):
+#define ${pin["name"]}_set_active()		${pin["name"]}_set_high
+#define ${pin["name"]}_set_inactive()	${pin["name"]}_set_low
+%else:
+#define ${pin["name"]}_set_active()		${pin["name"]}_set_low
+#define ${pin["name"]}_set_inactive()	${pin["name"]}_set_high
+%endif
+%endif
+#define ${pin["name"]}_get()			((${pin["name"]}_PORT->IDR >> ${pin["name"]}_PIN) & 1)
+#define ${pin["name"]}_is_high()		(${pin["name"]}_get() != 0)
+#define ${pin["name"]}_is_low()			(${pin["name"]}_get() == 0)
+%if not pin.get("invert", False):
+#define ${pin["name"]}_is_active()		${pin["name"]}_is_high()
+#define ${pin["name"]}_is_inactive()	${pin["name"]}_is_low()
+%else:
+#define ${pin["name"]}_is_active()		${pin["name"]}_is_low()
+#define ${pin["name"]}_is_inactive()	${pin["name"]}_is_high()
+%endif
+
+%endfor
+
 void default_fault_handler(void);
 void early_system_init(void);
 

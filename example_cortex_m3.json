@@ -4,6 +4,12 @@
 	"clocksrc": 	"hse-pll",
 	"hse-freq":		8000000,
 	"pinmap": {
-		"PA13": { "name": "foo", "mode": "out", "invert": true }
+		"PA1": { "name": "some_output1", "mode": "out" },
+		"PA2": { "name": "some_output2", "mode": "out" },
+		"PA3": { "name": "some_output3", "mode": "out" },
+		"PA13": { "name": "some_inverted_output", "mode": "out", "invert": true },
+		"PB3": { "name": "my_analog_input", "mode": "analog" },
+		"PB4": { "name": "my_digital_input", "mode": "in" },
+		"PB5": { "name": "my_switch", "mode": "in-up", "invert": true }
 	}
 }

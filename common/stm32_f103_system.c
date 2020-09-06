@@ -30,6 +30,7 @@
 #include <stdbool.h>
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_flash.h>
+#include <stm32f10x_gpio.h>
 #include "system.h"
 
 void default_fault_handler(void) {
@@ -131,8 +132,29 @@ static void clock_switch(void) {
 error("Unsupported clock source: %s" % (conf["clocksrc"]))
 %endif
 
+static void gpio_init(void) {
+	%for port in sorted(pinmap.used_ports()):
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIO${port}, ENABLE);
+	%endfor
+	%for ((port, mode, speed, init), definitions) in pinmap.functional_groups():
+	%if init:
+	{
+		GPIO_InitTypeDef gpio_init_struct = {
+				.GPIO_Pin = ${" | ".join("GPIO_Pin_%d" % (definition["pin"].pin_no) for definition in definitions)},
+				.GPIO_Mode = GPIO_Mode_${mode.stdperiph()},
+				%if speed is not None:
+				.GPIO_Speed = GPIO_Speed_${speed}MHz,
+				%endif
+		};
+		GPIO_Init(GPIO${port}, &gpio_init_struct);
+	}
+	%endif
+	%endfor
+}
+
 void early_system_init(void) {
 %if conf["clocksrc"] in [ "hse-pll", "hsi-pll", "hse", "hsi" ]:
 	clock_switch();
 %endif
+	gpio_init();
 }
