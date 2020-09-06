@@ -2,7 +2,7 @@
 
 include Makefile.toolchain
 
-PROJECT_NAME := new_project
+PROJECT_NAME := ${conf["name"]}
 TARGETS := $(PROJECT_NAME) $(PROJECT_NAME).bin
 
 %if conf["processor"].startswith("stm32f1"):

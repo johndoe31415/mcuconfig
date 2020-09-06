@@ -1,4 +1,5 @@
 {
+	"name": "example_project",
 	"processor":	"stm32f103c8",
 	"target_clk":	72000000,
 	"clocksrc": 	"hse-pll",
