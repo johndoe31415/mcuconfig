@@ -1,0 +1,1 @@
+<%inherit file="stm32_toolchain_makefile" />
