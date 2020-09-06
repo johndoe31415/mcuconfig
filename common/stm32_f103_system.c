@@ -136,18 +136,26 @@ static void gpio_init(void) {
 	%for port in sorted(pinmap.used_ports()):
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIO${port}, ENABLE);
 	%endfor
+	%for pin in [ pin for pin in pinmap if ("initial" in pin) ]:
+	%if pin["initial"] == "on":
+	${pin["name"]}_set_active();
+	%elif pin["initial"] == "off":
+	${pin["name"]}_set_inactive();
+	%elif pin["initial"] == "high":
+	${pin["name"]}_set_high();
+	%elif pin["initial"] == "low":
+	${pin["name"]}_set_low();
+	%endif
+	%endfor
 	%for ((port, mode, speed, init), definitions) in pinmap.functional_groups():
 	%if init:
-	{
-		GPIO_InitTypeDef gpio_init_struct = {
-				.GPIO_Pin = ${" | ".join("GPIO_Pin_%d" % (definition["pin"].pin_no) for definition in definitions)},
-				.GPIO_Mode = GPIO_Mode_${mode.stdperiph()},
-				%if speed is not None:
-				.GPIO_Speed = GPIO_Speed_${speed}MHz,
-				%endif
-		};
-		GPIO_Init(GPIO${port}, &gpio_init_struct);
-	}
+	GPIO_Init(GPIO${port}, &(GPIO_InitTypeDef){
+			.GPIO_Pin = ${" | ".join("GPIO_Pin_%d" % (definition["pin"].pin_no) for definition in definitions)},
+			.GPIO_Mode = GPIO_Mode_${mode.stdperiph()},
+			%if speed is not None:
+			.GPIO_Speed = GPIO_Speed_${speed}MHz,
+			%endif
+	});
 	%endif
 	%endfor
 }

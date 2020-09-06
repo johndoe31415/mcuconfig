@@ -44,18 +44,18 @@
 
 %>\
 // ${pin["name"]}: ${", ".join(pin_desc)}
-#define ${pin["name"]}_PORT				PORT${pin["pin"].port}
+#define ${pin["name"]}_PORT				GPIO${pin["pin"].port}
 #define ${pin["name"]}_PIN				${pin["pin"].pin_no}
 #define ${pin["name"]}_MASK				(1 << ${pin["name"]}_PIN)
 %if pin["mode"].settable:
 #define ${pin["name"]}_set_high()		${pin["name"]}_PORT->BSRR = ${pin["name"]}_MASK
 #define ${pin["name"]}_set_low()		${pin["name"]}_PORT->BRR = ${pin["name"]}_MASK
 %if not pin.get("invert", False):
-#define ${pin["name"]}_set_active()		${pin["name"]}_set_high
-#define ${pin["name"]}_set_inactive()	${pin["name"]}_set_low
+#define ${pin["name"]}_set_active()		${pin["name"]}_set_high()
+#define ${pin["name"]}_set_inactive()	${pin["name"]}_set_low()
 %else:
-#define ${pin["name"]}_set_active()		${pin["name"]}_set_low
-#define ${pin["name"]}_set_inactive()	${pin["name"]}_set_high
+#define ${pin["name"]}_set_active()		${pin["name"]}_set_low()
+#define ${pin["name"]}_set_inactive()	${pin["name"]}_set_high()
 %endif
 %endif
 #define ${pin["name"]}_get()			((${pin["name"]}_PORT->IDR >> ${pin["name"]}_PIN) & 1)

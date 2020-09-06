@@ -43,6 +43,8 @@ class PinMap():
 				raise InvalidPinmapDefinitionException("No 'name' attribute supplied for '%s'." % (pin_name))
 			if "mode" not in definition:
 				raise InvalidPinmapDefinitionException("No 'mode' attribute supplied for '%s'." % (pin_name))
+			if ("initial" in definition) and (definition["initial"] not in [ "on", "off", "high", "low" ]):
+				raise InvalidPinmapDefinitionException("Pin %s (\"%s\") has invalid value for 'initial': %s. Allowed are only on, off, high, low." % (pin_name, definition["name"], definition["initial"]))
 			if definition["name"] in seen_names:
 				raise InvalidPinmapDefinitionException("Duplicate name '%s' supplied for '%s'." % (definition["name"], pin_name))
 			seen_names.add(definition["name"])
@@ -67,7 +69,7 @@ class PinMap():
 class PinMapSTMCortexM(PinMap):
 	_PortPin = collections.namedtuple("PortPin", [ "port", "pin_no" ])
 	_PORTPIN_NAME_RE = re.compile("P(?P<port>[A-Z])(?P<pin_no>\d{1,2})")
-	_ALLOWED_DEFINITION_KEYWORDS = set([ "name", "mode", "invert", "af", "speed", "init" ])
+	_ALLOWED_DEFINITION_KEYWORDS = set([ "name", "mode", "invert", "af", "speed", "init", "initial" ])
 
 	class PinMode(enum.Enum):
 		Analog = "analog"
@@ -133,6 +135,10 @@ if __name__ == "__main__":
 		"PA10": { "name": "koo", "mode": "out", "init": False },
 		"PA9": { "name": "baz", "mode": "analog" },
 		"PA31": { "name": "meh", "mode": "analog" },
+		"PC1": { "name": "init_low", "mode": "out", "initial": "low" },
+		"PC2": { "name": "init_high", "mode": "out", "initial": "high" },
+		"PC3": { "name": "init_on", "mode": "out", "initial": "on" },
+		"PC4": { "name": "init_off", "mode": "out", "initial": "off" },
 	}
 	pinmap = PinMapSTMCortexM(pinmap_defs)
 	pinmap.dump()

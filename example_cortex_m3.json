@@ -10,6 +10,10 @@
 		"PA13": { "name": "some_inverted_output", "mode": "out", "invert": true },
 		"PB3": { "name": "my_analog_input", "mode": "analog" },
 		"PB4": { "name": "my_digital_input", "mode": "in" },
-		"PB5": { "name": "my_switch", "mode": "in-up", "invert": true }
+		"PB5": { "name": "my_switch", "mode": "in-up", "invert": true },
+		"PC0": { "name": "initial_high", "mode": "out", "initial": "high" },
+		"PA1": { "name": "initial_low", "mode": "out", "initial": "low" },
+		"PA2": { "name": "initial_on", "mode": "out", "initial": "on" },
+		"PA3": { "name": "initial_off", "mode": "out", "initial": "off" }
 	}
 }
