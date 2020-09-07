@@ -1,0 +1,15 @@
+.*.swp
+*.o
+${conf["name"]}
+${conf["name"]}.bin
+
+%if conf["processor"].startswith("stm32f1"):
+stdperiph/stdperiph.a
+stdperiph/STM32F10x_StdPeriph_Lib_V3.5.0
+stdperiph/en.stsw-stm32054.zip
+stdperiph/include
+stdperiph/system
+stdperiph/cmsis
+%else:
+${error("Processor family is unknown for .gitignore template")}
+%endif

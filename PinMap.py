@@ -50,11 +50,14 @@ class PinMap():
 			seen_names.add(definition["name"])
 
 	def grouped(self, group_function):
+		def _make_sortable(element):
+			return tuple(item or 0 for item in element)
+
 		groups = collections.defaultdict(list)
 		for pin in self:
 			key = group_function(pin)
 			groups[key].append(pin)
-		for (key, pins) in sorted(groups.items()):
+		for (key, pins) in sorted(groups.items(), key = lambda x: (_make_sortable(x[0]), x[1])):
 			yield (key, pins)
 
 	def __iter__(self):

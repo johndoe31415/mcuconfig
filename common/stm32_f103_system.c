@@ -136,7 +136,7 @@ static void gpio_init(void) {
 	%for port in sorted(pinmap.used_ports()):
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIO${port}, ENABLE);
 	%endfor
-	%for pin in [ pin for pin in pinmap if ("initial" in pin) ]:
+	%for pin in [ pin for pin in pinmap if (("initial" in pin) and pin["mode"].settable) ]:
 	%if pin["initial"] == "on":
 	${pin["name"]}_set_active();
 	%elif pin["initial"] == "off":
