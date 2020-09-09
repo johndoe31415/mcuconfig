@@ -52,6 +52,16 @@ class Helper():
 			(last_key, last_value) = (key, value)
 		return (last_key, last_value)
 
+class Options():
+	def __init__(self):
+		pass
+
+	def __call__(self, key):
+		if key == "gentime":
+			return False
+		else:
+			raise NotImplementedError("No such option: %s" % (key))
+
 class Configurator():
 	def __init__(self, args):
 		self._args = args
@@ -67,6 +77,7 @@ class Configurator():
 
 		self._lookup = mako.lookup.TemplateLookup([ self._dev_path, self._base_path + "common/" ], strict_undefined = True, input_encoding = "utf-8")
 		self._pinmap = PinMapSTMCortexM(self._config["pinmap"])
+		self._options = Options()
 
 	def _generate(self, filename, force = False):
 		def raise_error(msg):
@@ -86,6 +97,7 @@ class Configurator():
 			"pinmap":			self._pinmap,
 			"error":			lambda msg: raise_error("Template %s threw error: %s" % (filename, msg)),
 			"config_filename":	os.path.basename(self._args.config_file),
+			"option":			self._options,
 		}
 		output = template.render(**template_args)
 		with contextlib.suppress(FileExistsError):
