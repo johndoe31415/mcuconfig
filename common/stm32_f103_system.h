@@ -46,30 +46,32 @@
 
 %>\
 // ${pin["name"]}: ${", ".join(pin_desc)}
-#define ${pin["name"]}_PORT				GPIO${pin["pin"].port}
-#define ${pin["name"]}_PIN				${pin["pin"].pin_no}
-#define ${pin["name"]}_MASK				(1 << ${pin["name"]}_PIN)
+#define ${pin["name"]}_PORT					GPIO${pin["pin"].port}
+#define ${pin["name"]}_PIN					${pin["pin"].pin_no}
+#define ${pin["name"]}_MASK					(1 << ${pin["name"]}_PIN)
 %if pin["mode"].settable:
-#define ${pin["name"]}_set_high()		${pin["name"]}_PORT->BSRR = ${pin["name"]}_MASK
-#define ${pin["name"]}_set_low()		${pin["name"]}_PORT->BRR = ${pin["name"]}_MASK
+#define ${pin["name"]}_set_high()			${pin["name"]}_PORT->BSRR = ${pin["name"]}_MASK
+#define ${pin["name"]}_set_low()			${pin["name"]}_PORT->BRR = ${pin["name"]}_MASK
 %if not pin.get("invert", False):
-#define ${pin["name"]}_set_active()		${pin["name"]}_set_high()
-#define ${pin["name"]}_set_inactive()	${pin["name"]}_set_low()
+#define ${pin["name"]}_set_active()			${pin["name"]}_set_high()
+#define ${pin["name"]}_set_inactive()		${pin["name"]}_set_low()
 %else:
-#define ${pin["name"]}_set_active()		${pin["name"]}_set_low()
-#define ${pin["name"]}_set_inactive()	${pin["name"]}_set_high()
+#define ${pin["name"]}_set_active()			${pin["name"]}_set_low()
+#define ${pin["name"]}_set_inactive()		${pin["name"]}_set_high()
 %endif
-#define ${pin["name"]}_toggle()			${pin["name"]}_PORT->ODR ^= ${pin["name"]}_MASK
+#define ${pin["name"]}_toggle()				${pin["name"]}_PORT->ODR ^= ${pin["name"]}_MASK
+#define ${pin["name"]}_set_to(value)		if (value) { ${pin["name"]}_set_active(); } else { ${pin["name"]}_set_inactive(); }
+#define ${pin["name"]}_set_logic_to(value)	if (value) { ${pin["name"]}_set_high(); } else { ${pin["name"]}_set_low(); }
 %endif
-#define ${pin["name"]}_get()			((${pin["name"]}_PORT->IDR >> ${pin["name"]}_PIN) & 1)
-#define ${pin["name"]}_is_high()		(${pin["name"]}_get() != 0)
-#define ${pin["name"]}_is_low()			(${pin["name"]}_get() == 0)
+#define ${pin["name"]}_get()				((${pin["name"]}_PORT->IDR >> ${pin["name"]}_PIN) & 1)
+#define ${pin["name"]}_is_high()			(${pin["name"]}_get() != 0)
+#define ${pin["name"]}_is_low()				(${pin["name"]}_get() == 0)
 %if not pin.get("invert", False):
-#define ${pin["name"]}_is_active()		${pin["name"]}_is_high()
-#define ${pin["name"]}_is_inactive()	${pin["name"]}_is_low()
+#define ${pin["name"]}_is_active()			${pin["name"]}_is_high()
+#define ${pin["name"]}_is_inactive()		${pin["name"]}_is_low()
 %else:
-#define ${pin["name"]}_is_active()		${pin["name"]}_is_low()
-#define ${pin["name"]}_is_inactive()	${pin["name"]}_is_high()
+#define ${pin["name"]}_is_active()			${pin["name"]}_is_low()
+#define ${pin["name"]}_is_inactive()		${pin["name"]}_is_high()
 %endif
 
 %endfor
