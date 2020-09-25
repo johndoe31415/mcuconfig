@@ -135,6 +135,12 @@ error("Unsupported clock source: %s" % (conf["clocksrc"]))
 %endif
 
 static void gpio_init(void) {
+	%if ("remap" in conf) and (len(conf["remap"]) > 0):
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	%for remap_function in conf["remap"]:
+	GPIO_PinRemapConfig(GPIO_${remap_function}, ENABLE);
+	%endfor
+	%endif
 	%for port in sorted(pinmap.used_ports()):
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIO${port}, ENABLE);
 	%endfor
