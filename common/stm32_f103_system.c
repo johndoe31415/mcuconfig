@@ -29,26 +29,16 @@
  *	Johannes Bauer <JohannesBauer@gmx.de>
 **/
 
-#include <stdbool.h>
-#include <stm32f10x_rcc.h>
-#include <stm32f10x_flash.h>
-#include <stm32f10x_gpio.h>
-#include "system.h"
-
-void default_fault_handler(void) {
-	while (true);
-}
-
-%if conf["clocksrc"] in [ "hse-pll", "hsi-pll", "hse" ]:
+<%def name="generate_clock_switch_function(clock_src, export = True)">\
 <%
-	if conf["clocksrc"] in [ "hsi", "hsi-pll" ]:
+	if clock_src in [ "hsi", "hsi-pll" ]:
 		base_clock = 8000000
 	else:
 		base_clock = conf["hse-freq"]
 
 	cfgr_flags = set()
-	if conf["clocksrc"] in [ "hse-pll", "hsi-pll" ]:
-		if conf["clocksrc"] == "hse-pll":
+	if clock_src in [ "hse-pll", "hsi-pll" ]:
+		if clock_src == "hse-pll":
 			src_clk = base_clock
 			cfgr_flags.add("RCC_CFGR_PLLSRC_HSE")
 		else:
@@ -67,21 +57,30 @@ void default_fault_handler(void) {
 		cfgr_flags.add("RCC_CFGR_PPRE1_DIV2")
 
 %>\
-static void clock_switch(void) {
-%if conf["clocksrc"] in [ "hse-pll", "hse" ]:
+${"" if export else "static "}void clock_switch_${clock_src.replace("-", "_")}(void) {
+%if clock_src in [ "hse-pll", "hse" ]:
 	/* Enable HSE oscillator, ${"%.3f" % (base_clock / 1e6)} MHz */
 	RCC->CR |= RCC_CR_HSEON;
 
 	/* Wait for HSE to become ready */
 	while (!(RCC->CR & RCC_CR_HSERDY));
+%elif clock_src in [ "hsi-pll", "hsi" ]:
+	/* Enable HSI oscillator, ${"%.3f" % (base_clock / 1e6)} MHz */
+	RCC->CR |= RCC_CR_HSION;
 
-	%endif
-%if conf["clocksrc"] == "hse-pll":
+	/* Wait for HSI to become ready */
+	while (!(RCC->CR & RCC_CR_HSIRDY));
+%else:
+${error("Undefined clock source: %s" % (clock_src))}
+%endif
+
+%if len(cfgr_flags) > 0:
+%if clock_src == "hse-pll":
 	/* Source for PLL is HSE (base ${"%.3f" % (base_clock / 1e6)} MHz */
-%elif conf["clocksrc"] == "hsi-pll":
+%elif clock_src == "hsi-pll":
 	/* Source for PLL is HSI (base ${"%.3f" % (base_clock / 1e6)} MHz */
 %endif
-%if conf["clocksrc"] in [ "hse-pll", "hsi-pll" ]:
+%if clock_src in [ "hse-pll", "hsi-pll" ]:
 	/* Source clock for PLL ${"%.3f" % (src_clk / 1e6)} MHz * ${multiplier} = ${"%.3f" % (sys_clock / 1e6)} MHz */
 %endif
 %if sys_clock > 36e6:
@@ -89,51 +88,84 @@ static void clock_switch(void) {
 %endif
 	RCC->CFGR = ${" | ".join(sorted(cfgr_flags))};
 
-	%if conf["clocksrc"] in [ "hse-pll", "hsi-pll" ]:
+%endif
+%if clock_src in [ "hse-pll", "hsi-pll" ]:
 	/* Enable the PLL */
 	RCC->CR |= RCC_CR_PLLON;
 
 	/* Wait for PLL to become ready */
 	while (!(RCC->CR & RCC_CR_PLLRDY));
-	%endif
 
-	%if sys_clock <= 24e6:
-	/* No Flash wait states needed below 24 MHz SYSCLK (SYSCLK = ${"%.3f" % (sys_clock / 1e6)} MHz) */
-	%elif sys_clock <= 48e6:
-	/* One Flash wait state needed between 24 MHz and 48 MHz SYSCLK (SYSCLK = ${"%.3f" % (sys_clock / 1e6)} MHz) */
-	FLASH_SetLatency(FLASH_Latency_1);
-	%else:
-	/* Two Flash wait state needed between 48 MHz and 72 MHz SYSCLK (SYSCLK = ${"%.3f" % (sys_clock / 1e6)} MHz) */
+%endif
+	/* We don't know the speed we previously operated at, so assume we
+	 * currently need worst-case timing (2 Flash wait states) */
 	FLASH_SetLatency(FLASH_Latency_2);
-	%endif
 
-	%if conf["clocksrc"] in [ "hse-pll", "hsi-pll" ]:
+	%if clock_src in [ "hse-pll", "hsi-pll" ]:
 	/* Switch clock source to PLL */
 	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_PLL;
 
 	/* Wait for PLL to become active clock */
 	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
-	%elif conf["clocksrc"] == "hse":
+	%elif clock_src == "hse":
 	/* Switch clock source to HSE */
 	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSE;
 
 	/* Wait for HSE to become active */
 	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSE);
-	%endif
-	%if conf["clocksrc"] in [ "hse-pll", "hse" ]:
+	%elif clock_src == "hsi":
+	/* Switch clock source to HSI */
+	RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSI;
 
-	/* Disable HSI to save power */
-	RCC->CR &= ~RCC_CR_HSION;
+	/* Wait for HSI to become active */
+	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI);
 	%endif
-}
-%elif conf["clocksrc"] == "hsi":
-static void clock_switch(void) {
-	/* Using HSI oscillator, ${"%.3f" % (base_clock / 1e6)} MHz */
-}
+
+%if sys_clock <= 24e6:
+	/* No Flash wait states needed below 24 MHz SYSCLK (SYSCLK = ${"%.3f" % (sys_clock / 1e6)} MHz) */
+	FLASH_SetLatency(FLASH_Latency_0);
+%elif sys_clock <= 48e6:
+	/* One Flash wait state needed between 24 MHz and 48 MHz SYSCLK (SYSCLK = ${"%.3f" % (sys_clock / 1e6)} MHz) */
+	FLASH_SetLatency(FLASH_Latency_1);
 %else:
-error("Unsupported clock source: %s" % (conf["clocksrc"]))
+	/* Two Flash wait state needed between 48 MHz and 72 MHz SYSCLK (SYSCLK = ${"%.3f" % (sys_clock / 1e6)} MHz) */
+	/* This has already been set before, so no need to do anything */
 %endif
 
+	%if clock_src == "hse-pll":
+	/* Disable HSI to save power */
+	RCC->CR &= ~RCC_CR_HSION;
+	%elif clock_src == "hse":
+	/* Disable HSI and PLL to save power */
+	RCC->CR &= ~(RCC_CR_HSION | RCC_CR_PLLON);
+	%elif clock_src == "hsi":
+	/* Disable HSE and PLL to save power */
+	RCC->CR &= ~(RCC_CR_HSEON | RCC_CR_PLLON);
+	%elif clock_src == "hsi-pll":
+	/* Disable HSE to save power */
+	RCC->CR &= ~RCC_CR_HSEON;
+	%endif
+}
+</%def>\
+\
+#include <stdbool.h>
+#include <stm32f10x_rcc.h>
+#include <stm32f10x_flash.h>
+#include <stm32f10x_gpio.h>
+#include "system.h"
+
+void default_fault_handler(void) {
+	while (true);
+}
+
+<%
+	gen_clocks = set(conf.get("gen-clocks", [ ]))
+	gen_clocks.add(conf["clocksrc"])
+	clock_functions_public = (len(gen_clocks) > 1)
+%>
+%for clock_function in sorted(gen_clocks):
+${generate_clock_switch_function(clock_function, export = clock_functions_public)}
+%endfor
 static void gpio_init(void) {
 	%if ("remap" in conf) and (len(conf["remap"]) > 0):
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
@@ -171,8 +203,6 @@ static void gpio_init(void) {
 }
 
 void early_system_init(void) {
-%if conf["clocksrc"] in [ "hse-pll", "hsi-pll", "hse", "hsi" ]:
-	clock_switch();
-%endif
+	clock_switch_${conf["clocksrc"].replace("-", "_")}();
 	gpio_init();
 }

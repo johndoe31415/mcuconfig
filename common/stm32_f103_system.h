@@ -78,5 +78,15 @@
 
 void default_fault_handler(void);
 void early_system_init(void);
+<%
+	gen_clocks = set(conf.get("gen-clocks", [ ]))
+	gen_clocks.add(conf["clocksrc"])
+	clock_functions_public = (len(gen_clocks) > 1)
+%>\
+%if clock_functions_public:
+%for clock_src in sorted(gen_clocks):
+void clock_switch_${clock_src.replace("-", "_")}(void);
+%endfor
+%endif
 
 #endif
